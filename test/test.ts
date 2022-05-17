@@ -82,8 +82,8 @@ describe("MultipartyWallet", function () {
     await multipartyWallet.addOwner(UserFive.address);
     await multipartyWallet.connect(UserOne).createTransaction();
     const nextId = await multipartyWallet.nextId();
-    const transTotalQuorum = await multipartyWallet.getTransactionQuorum(nextId-1);
-    console.log("Total Quorum of Transaction-1 is : ", transTotalQuorum.toNumber());
+    const transTotalQuorum = await multipartyWallet.getTransactionApprovalsRequired(nextId-1);
+    console.log("Approvals required for Transaction-1 is : ", transTotalQuorum.toNumber());
     expect(nextId).to.equal(1);
     expect(transTotalQuorum).to.equal(3);
   });
@@ -226,6 +226,52 @@ describe("MultipartyWallet", function () {
     await expect(
       multipartyWallet.connect(UserOne).executeTransaction(nextId-1)
     ).to.be.revertedWith("quorum has not reached");
+  });
+
+  it("Update Contract Quorum ", async function () {
+    await multipartyWallet.addOwner(UserOne.address);
+    await multipartyWallet.addOwner(UserTwo.address);
+    await multipartyWallet.addOwner(UserThree.address);
+    await multipartyWallet.addOwner(UserFour.address);
+    await multipartyWallet.addOwner(UserFive.address);
+
+    await multipartyWallet.updateQuorum(40);
+
+    await multipartyWallet.connect(UserOne).createTransaction();
+    const nextId = await multipartyWallet.nextId();
+    const transTotalQuorum = await multipartyWallet.getTransactionApprovalsRequired(nextId-1);
+    console.log("Approvals required for Transaction-1 is : ", transTotalQuorum.toNumber());
+    expect(transTotalQuorum).to.equal(2);
+  });
+
+  it("Update Transction Quorum ", async function () {
+    await multipartyWallet.addOwner(UserOne.address);
+    await multipartyWallet.addOwner(UserTwo.address);
+    await multipartyWallet.addOwner(UserThree.address);
+    await multipartyWallet.addOwner(UserFour.address);
+    await multipartyWallet.addOwner(UserFive.address);
+    await multipartyWallet.connect(UserOne).createTransaction();
+
+    const nextId = await multipartyWallet.nextId();
+    await multipartyWallet.connect(UserTwo).approveTransaction(nextId-1);
+    await multipartyWallet.connect(UserThree).approveTransaction(nextId-1);
+    
+    const transTotalQuorum1 = await multipartyWallet.getTransactionApprovalsRequired(nextId-1);
+    console.log("Approvals required for Transaction-1 is : ", transTotalQuorum1.toNumber());
+
+    await expect(
+      multipartyWallet.connect(UserOne).executeTransaction(nextId-1)
+    ).to.be.revertedWith("quorum has not reached");
+
+    await multipartyWallet.updateTransactionQuorum(nextId-1,40);
+
+    const transTotalQuorum2 = await multipartyWallet.getTransactionApprovalsRequired(nextId-1);
+    console.log("Approvals required for Transaction-1 after quorum update : ", transTotalQuorum2.toNumber());
+
+    await multipartyWallet.connect(UserOne).executeTransaction(nextId-1);
+
+    const cleared = await multipartyWallet.getTransactionStatus(nextId-1);
+    expect(cleared).to.equal(true);
   });
 
 });
