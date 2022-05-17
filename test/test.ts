@@ -35,9 +35,11 @@ describe("MultipartyWallet", function () {
     await multipartyWallet.addOwner(UserTwo.address);
     const A = await multipartyWallet.owners(UserOne.address);
     const B = await multipartyWallet.owners(UserTwo.address);
+    const C = await multipartyWallet.owners(UserThree.address);
     
     expect(A).to.equal(true);
     expect(B).to.equal(true);
+    expect(C).to.equal(false);
   });
 
   it("Owner already added ", async function () {
