@@ -75,7 +75,7 @@ contract MultipartyWallet {
       transactions[id].approvalsReceived++;
   }
 
-    function  executeTransaction(uint id) onlyApprover() external {
+    function  executeTransaction(uint id) external {
       require(transactions[id].cleared == false, "Transaction has been already cleared");
       require(transactions[id].createdBy == msg.sender, "Only Owner of transction can execute");
       require(transactions[id].approvalsReceived >= transactions[id].approvalsRequired, "quorum has not reached");
